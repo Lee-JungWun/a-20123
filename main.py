@@ -90,28 +90,36 @@ with st.container():
 st.divider()
 
 # ---------------------------------------------------------
-# [세 번째 구역] TOP 5 영화 누적 관객수 비교 (다중 선 그래프)
+# [세 번째 구역] 20일 이상 등장한 영화 중 누적 관객수 TOP 5 비교 (다중 선 그래프)
 # ---------------------------------------------------------
 with st.container():
-    st.subheader("🏆 누적 관객수 TOP 5 영화 추이 비교")
+    st.subheader("🏆 20일 이상 차트인 영화 중 TOP 5 누적 관객수 추이 비교")
     
-    # 1. 전체 데이터에서 최고 누적관객수 기준 상위 5개 영화명을 추출합니다.
-    top5_movies = df.groupby('영화명')['누적관객수'].max().nlargest(5).index.tolist()
+    # 1. 영화별 등장 일수(데이터 행 수)를 계산합니다.
+    movie_counts = df['영화명'].value_counts()
     
-    # 2. 상위 5개 영화에 해당하는 데이터만 추출합니다.
+    # 2. 등장 일수가 20일 이상인 영화 이름만 걸러냅니다.
+    over_20_days_movies = movie_counts[movie_counts >= 20].index
+    
+    # 3. 20일 이상 등장한 영화들의 데이터만 1차로 필터링합니다.
+    filtered_df = df[df['영화명'].isin(over_20_days_movies)]
+    
+    # 4. 필터링된 영화 중 최고 누적관객수가 가장 높은 상위 5개 영화를 선별합니다.
+    top5_movies = filtered_df.groupby('영화명')['누적관객수'].max().nlargest(5).index.tolist()
+    
+    # 5. 상위 5개 영화에 해당하는 데이터만 최종 추출합니다.
     top5_df = df[df['영화명'].isin(top5_movies)]
     
-    # 3. color='영화명' 설정을 통해 영화별로 색상을 다르게 지정하고 범례(Legend)를 자동 생성합니다.
+    # 6. 다중 선 그래프 생성 (color='영화명' 옵션으로 색상 및 범례 자동 지정)
     fig3 = px.line(
         top5_df,
         x='기준일자',
         y='누적관객수',
         color='영화명',
-        title="누적 관객수 상위 5개 영화의 기간별 성장 추이 비교",
+        title="20일 이상 차트인한 주요 흥행작 TOP 5의 누적 관객수 변화 비교",
         markers=True
     )
     
-    # 레이블 및 차트 스타일 지정
     fig3.update_layout(
         xaxis_title="기준일자",
         yaxis_title="누적 관객수(명)",
@@ -119,8 +127,7 @@ with st.container():
         legend_title="영화 제목"
     )
     
-    # Streamlit 화면에 다중 선 그래프 출력
     st.plotly_chart(fig3, use_container_width=True)
     
     # 설명 문구
-    st.info("💡 **이 그래프로 알 수 있는 것:** 박스오피스 상위 5개 영화의 흥행 속도를 직접 비교하여, 초기 모객 속도가 가장 빠른 영화와 장기 흥행에 성공한 영화 간의 차이를 한눈에 볼 수 있습니다.")
+    st.info("💡 **이 그래프로 알 수 있는 것:** 단기 반짝 흥행을 제외하고 최소 20일 이상 차트에 머문 대표 '장기 흥행작' 5편의 누적 관객수 증가 속도와 최종 흥행 스케일을 비교해볼 수 있습니다.")
