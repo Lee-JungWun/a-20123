@@ -39,14 +39,14 @@ selected_movie = st.sidebar.selectbox("영화를 선택하세요:", movie_list)
 # 선택된 영화에 해당하는 데이터만 필터링합니다.
 movie_df = df[df['영화명'] == selected_movie]
 
-# [5. 기타 - 추후 그래프 추가를 위한 구역 분할]
-# 첫 번째 시각화 구역 (컨테이너)
+# ---------------------------------------------------------
+# [첫 번째 구역] 일별 관객수 (선 그래프)
+# ---------------------------------------------------------
 with st.container():
     st.subheader(f"📊 {selected_movie} - 일별 관객수 추이")
     
     # [4. 선그래프 그리기]
-    # Plotly를 사용하여 날짜별 해당일관객수 변화를 나타내는 선 그래프를 생성합니다.
-    fig = px.line(
+    fig1 = px.line(
         movie_df,
         x='기준일자',
         y='해당일관객수',
@@ -54,21 +54,46 @@ with st.container():
         markers=True
     )
     
-    # X축/Y축 레이블 설정 및 깔끔한 스타일 변경
-    fig.update_layout(
+    # X축/Y축 레이블 및 스타일 설정
+    fig1.update_layout(
         xaxis_title="기준일자",
-        yaxis_title="해당일 관객수",
+        yaxis_title="해당일 관객수(명)",
         hovermode="x unified"
     )
     
     # Streamlit 화면에 Plotly 그래프 출력
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig1, use_container_width=True)
     
-    # [5. 기타 - 그래프 설명 문구 출력 자릿수]
-    st.info(f"💡 **이 그래프로 알 수 있는 것:** {selected_movie}의 개봉 후 날짜 흐름에 따른 일별 관객수 증감 패턴과 전성기 시점을 한눈에 확인할 수 있습니다.")
+    # 그래프 설명 문구
+    st.info(f"💡 **이 그래프로 알 수 있는 것:** {selected_movie}의 개봉 후 일자별 관객수 증감 패턴(주말 상승/평일 감소)과 최대 관객을 동원한 전성기 시점을 확인할 수 있습니다.")
 
-# 추후 추가할 다음 구역을 위한 구분선 및 예시 공간
 st.divider()
 
+# ---------------------------------------------------------
+# [두 번째 구역] 누적 관객수 (영역 차트)
+# ---------------------------------------------------------
 with st.container():
-    st.write("📌 *추후 새로운 분석 그래프가 이곳에 추가될 예정입니다.*")
+    st.subheader(f"📈 {selected_movie} - 누적 관객수 성장 추이")
+    
+    # [새로 추가된 영역차트 그리기]
+    # px.area 함수를 사용하여 기준일자별 누적관객수 변화를 나타냅니다.
+    fig2 = px.area(
+        movie_df,
+        x='기준일자',
+        y='누적관객수',
+        title=f"[{selected_movie}] 누적 관객수 변화 그래프",
+        markers=True
+    )
+    
+    # X축/Y축 레이블 및 스타일 설정
+    fig2.update_layout(
+        xaxis_title="기준일자",
+        yaxis_title="누적 관객수(명)",
+        hovermode="x unified"
+    )
+    
+    # Streamlit 화면에 영역차트 출력
+    st.plotly_chart(fig2, use_container_width=True)
+    
+    # 영역차트 설명 문구
+    st.info(f"💡 **이 그래프로 알 수 있는 것:** 시간 경과에 따른 {selected_movie}의 전체 누적 관객수 증가 속도와 관객 동원이 완만해지는 흥행 정체 시점을 파악할 수 있습니다.")
