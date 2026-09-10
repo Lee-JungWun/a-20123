@@ -30,22 +30,21 @@ df = load_data()
 st.title("🎬 영화 박스오피스 데이터 분석")
 
 # [3. 영화 선택 기능]
-# 영화별 최고 누적관객수를 구해 내림차순으로 정렬한 뒤 영화 이름 목록을 생성합니다.
+# 영화별 최고 누적관객수를 구해 내림차순으로 정렬한 뒤 전체 영화 이름 목록을 생성합니다.
 movie_list = df.groupby('영화명')['누적관객수'].max().sort_values(ascending=False).index.tolist()
 
-# 사이드바에 영화 선택 셀렉트박스를 생성합니다.
+# 사이드바에 개별 영화 선택 셀렉트박스를 생성합니다.
 selected_movie = st.sidebar.selectbox("영화를 선택하세요:", movie_list)
 
-# 선택된 영화에 해당하는 데이터만 필터링합니다.
+# 선택된 단일 영화 데이터만 필터링합니다.
 movie_df = df[df['영화명'] == selected_movie]
 
 # ---------------------------------------------------------
-# [첫 번째 구역] 일별 관객수 (선 그래프)
+# [첫 번째 구역] 개별 영화 - 일별 관객수 (선 그래프)
 # ---------------------------------------------------------
 with st.container():
     st.subheader(f"📊 {selected_movie} - 일별 관객수 추이")
     
-    # [4. 선그래프 그리기]
     fig1 = px.line(
         movie_df,
         x='기준일자',
@@ -54,29 +53,23 @@ with st.container():
         markers=True
     )
     
-    # X축/Y축 레이블 및 스타일 설정
     fig1.update_layout(
         xaxis_title="기준일자",
         yaxis_title="해당일 관객수(명)",
         hovermode="x unified"
     )
     
-    # Streamlit 화면에 Plotly 그래프 출력
     st.plotly_chart(fig1, use_container_width=True)
-    
-    # 그래프 설명 문구
     st.info(f"💡 **이 그래프로 알 수 있는 것:** {selected_movie}의 개봉 후 일자별 관객수 증감 패턴(주말 상승/평일 감소)과 최대 관객을 동원한 전성기 시점을 확인할 수 있습니다.")
 
 st.divider()
 
 # ---------------------------------------------------------
-# [두 번째 구역] 누적 관객수 (영역 차트)
+# [두 번째 구역] 개별 영화 - 누적 관객수 (영역 차트)
 # ---------------------------------------------------------
 with st.container():
     st.subheader(f"📈 {selected_movie} - 누적 관객수 성장 추이")
     
-    # [새로 추가된 영역차트 그리기]
-    # px.area 함수를 사용하여 기준일자별 누적관객수 변화를 나타냅니다.
     fig2 = px.area(
         movie_df,
         x='기준일자',
@@ -85,15 +78,49 @@ with st.container():
         markers=True
     )
     
-    # X축/Y축 레이블 및 스타일 설정
     fig2.update_layout(
         xaxis_title="기준일자",
         yaxis_title="누적 관객수(명)",
         hovermode="x unified"
     )
     
-    # Streamlit 화면에 영역차트 출력
     st.plotly_chart(fig2, use_container_width=True)
-    
-    # 영역차트 설명 문구
     st.info(f"💡 **이 그래프로 알 수 있는 것:** 시간 경과에 따른 {selected_movie}의 전체 누적 관객수 증가 속도와 관객 동원이 완만해지는 흥행 정체 시점을 파악할 수 있습니다.")
+
+st.divider()
+
+# ---------------------------------------------------------
+# [세 번째 구역] TOP 5 영화 누적 관객수 비교 (다중 선 그래프)
+# ---------------------------------------------------------
+with st.container():
+    st.subheader("🏆 누적 관객수 TOP 5 영화 추이 비교")
+    
+    # 1. 전체 데이터에서 최고 누적관객수 기준 상위 5개 영화명을 추출합니다.
+    top5_movies = df.groupby('영화명')['누적관객수'].max().nlargest(5).index.tolist()
+    
+    # 2. 상위 5개 영화에 해당하는 데이터만 추출합니다.
+    top5_df = df[df['영화명'].isin(top5_movies)]
+    
+    # 3. color='영화명' 설정을 통해 영화별로 색상을 다르게 지정하고 범례(Legend)를 자동 생성합니다.
+    fig3 = px.line(
+        top5_df,
+        x='기준일자',
+        y='누적관객수',
+        color='영화명',
+        title="누적 관객수 상위 5개 영화의 기간별 성장 추이 비교",
+        markers=True
+    )
+    
+    # 레이블 및 차트 스타일 지정
+    fig3.update_layout(
+        xaxis_title="기준일자",
+        yaxis_title="누적 관객수(명)",
+        hovermode="x unified",
+        legend_title="영화 제목"
+    )
+    
+    # Streamlit 화면에 다중 선 그래프 출력
+    st.plotly_chart(fig3, use_container_width=True)
+    
+    # 설명 문구
+    st.info("💡 **이 그래프로 알 수 있는 것:** 박스오피스 상위 5개 영화의 흥행 속도를 직접 비교하여, 초기 모객 속도가 가장 빠른 영화와 장기 흥행에 성공한 영화 간의 차이를 한눈에 볼 수 있습니다.")
